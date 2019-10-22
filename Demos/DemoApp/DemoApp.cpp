@@ -56,6 +56,15 @@ Demo::DemoApp::DemoApp(const std::string& name, size_t width, size_t height)
 		rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, hInstance, nullptr);
 
 	mExisted = true;
+
+	ImGui::CreateContext();
+	ImGui_ImplWin32_Init(mHwnd);
+}
+
+Demo::DemoApp::~DemoApp()
+{
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 }
 
 void Demo::DemoApp::show() const
@@ -93,6 +102,8 @@ void Demo::DemoApp::runLoop()
 
 		currentTime = Time::now();
 
+		ImGui_ImplWin32_NewFrame();
+		
 		update(duration.count());
 		render(duration.count());
 	}

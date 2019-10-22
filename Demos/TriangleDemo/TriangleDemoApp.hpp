@@ -6,11 +6,24 @@
 #include <Pipelines/PipelineInfo.hpp>
 #include <DemoApp.hpp>
 
+#include <Extensions/ImGui/ImGuiWindows.hpp>
+
 #define __DIRECTX12__MODE__
 #define __VULKAN__MODE__
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
+
+struct TriangleDemoUIComponent {
+	glm::vec3 TrianglePositions[3];
+	glm::vec4 Color;
+
+	TriangleDemoUIComponent();
+	
+	auto view() const -> std::shared_ptr<CodeRed::ImGuiView> { return mView; }
+private:
+	std::shared_ptr<CodeRed::ImGuiView> mView;
+};
 
 class TriangleDemoApp final : public Demo::DemoApp {
 public:
@@ -25,7 +38,7 @@ private:
 	void render(float delta) override;
 
 	void initialize();
-
+	
 	void initializeCommands();
 
 	void initializeSwapChain();
@@ -40,12 +53,16 @@ private:
 
 	void initializePipeline();
 
+	void initializeImGuiWindows();
+	
 	void initializeDescriptorHeaps();
 private:
 	const size_t maxFrameResources = 2;
 
 	size_t mCurrentFrameIndex = 0;
 
+	std::shared_ptr<TriangleDemoUIComponent> mUIComponent;
+	
 	std::shared_ptr<CodeRed::GpuLogicalDevice> mDevice;
 	std::shared_ptr<CodeRed::GpuSwapChain> mSwapChain;
 
@@ -56,12 +73,13 @@ private:
 	std::vector<CodeRed::FrameResources> mFrameResources =
 		std::vector<CodeRed::FrameResources>(maxFrameResources);
 
-	std::shared_ptr<CodeRed::GpuBuffer> mVertexBuffer;
 	std::shared_ptr<CodeRed::GpuBuffer> mViewBuffer;
 
 	std::shared_ptr<CodeRed::GpuPipelineFactory> mPipelineFactory;
 	std::shared_ptr<CodeRed::PipelineInfo> mPipelineInfo;
 
+	std::shared_ptr<CodeRed::ImGuiWindows> mImGuiWindows;
+	
 	std::vector<CodeRed::Byte> mVertexShaderCode;
 	std::vector<CodeRed::Byte> mPixelShaderCode;
 };

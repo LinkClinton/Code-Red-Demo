@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/CodeRedGraphics.hpp>
+#include <CodeRed/Core/CodeRedGraphics.hpp>
 
 #ifdef __ENABLE__VULKAN__
 #include <shaderc/shaderc.hpp>

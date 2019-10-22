@@ -20,6 +20,32 @@ void Particle::reverseIfOut(glm::vec2& offset, const size_t width, const size_t 
 	Position = Position + offset;
 }
 
+ParticlesDemoUIComponent::ParticlesDemoUIComponent()
+{
+	mParticlesView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			if (Particles.has_value() == false) return;
+		
+			ImGui::BeginChild("Particle Positions");
+	
+			for (size_t index = 0; index < Particles.value()->size(); index++) {
+				const auto& particle = (*Particles.value())[index];
+				
+				ImGui::Text("Particle %u : (%.3f, %.3f)", index,
+					particle.Position.x, particle.Position.y);
+			}
+		
+			ImGui::EndChild();
+		});
+
+	mProgramStateView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			const auto* text = Pause == true ? "Continue" : "Pause";
+
+			if (ImGui::Button(text)) Pause ^= true;
+		});
+}
+
 ParticlesDemoApp::ParticlesDemoApp(
 	const std::string& name,
 	const size_t width,
@@ -48,8 +74,11 @@ void ParticlesDemoApp::update(float delta)
 {
 	const auto speed = 100.0f;
 	const auto length = speed * delta;
-
+	
 	for (size_t index = 0; index < mParticles.size(); index++) {
+		//if we pause the program state, we do not update the positions
+		if (mUIComponent->Pause) break;
+		
 		auto& particle = mParticles[index];
 		auto& transform = mTransform[index];
 		auto offset = particle.Forward * length;
@@ -64,6 +93,8 @@ void ParticlesDemoApp::update(float delta)
 	const auto memory = buffer->mapMemory();
 	std::memcpy(memory, mTransform.data(), buffer->size());
 	buffer->unmapMemory();
+
+	mImGuiWindows->update();
 }
 
 
@@ -95,6 +126,8 @@ void ParticlesDemoApp::render(float delta)
 		frameBuffer);
 	
 	mCommandList->drawIndexed(6, particleCount);
+
+	mImGuiWindows->draw(mCommandList);
 	
 	mCommandList->endRenderPass();
 		
@@ -136,6 +169,7 @@ void ParticlesDemoApp::initialize()
 	initializeSamplers();
 	initializeTextures();
 	initializePipeline();
+	initializeImGuiWindows();
 	initializeDescriptorHeaps();
 }
 
@@ -377,6 +411,27 @@ void ParticlesDemoApp::initializePipeline()
 	);
 	
 	mPipelineInfo->updateState();
+}
+
+void ParticlesDemoApp::initializeImGuiWindows()
+{
+	mUIComponent = std::make_shared<ParticlesDemoUIComponent>();
+	mUIComponent->Particles = &mParticles;
+	mUIComponent->Pause = false;
+
+	//for high dpi display device, you need change the scale.
+	ImGui::GetIO().FontGlobalScale = 1.5f;
+
+	mImGuiWindows = std::make_shared<CodeRed::ImGuiWindows>(
+		mDevice,
+		mPipelineInfo->renderPass(),
+		mCommandAllocator,
+		mCommandQueue,
+		maxFrameResources);
+
+	//add the ui component to windows
+	mImGuiWindows->add("Tool", "Program State", mUIComponent->programStateView());
+	mImGuiWindows->add("Tool", "Particles", mUIComponent->particlesView());
 }
 
 void ParticlesDemoApp::initializeDescriptorHeaps()

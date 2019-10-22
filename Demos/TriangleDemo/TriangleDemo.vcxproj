@@ -72,25 +72,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)Bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Bin\$(PlatformTarget)\$(Configuration)\</IntDir>
-    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir)Demos\DemoApp;$(SolutionDir)References\Code-Red\CodeRed;$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir)Demos\DemoApp;$(SolutionDir)References\Code-Red;$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)Bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Bin\$(PlatformTarget)\$(Configuration)\</IntDir>
-    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir)Demos\DemoApp;$(SolutionDir)References\Code-Red\CodeRed;$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir)Demos\DemoApp;$(SolutionDir)References\Code-Red;$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)Bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Bin\$(PlatformTarget)\$(Configuration)\</IntDir>
-    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir)Demos\DemoApp;$(SolutionDir)References\Code-Red\CodeRed;$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir)Demos\DemoApp;$(SolutionDir)References\Code-Red;$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)Bin\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Bin\$(PlatformTarget)\$(Configuration)\</IntDir>
-    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir)Demos\DemoApp;$(SolutionDir)References\Code-Red\CodeRed;$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(SolutionDir)Demos\DemoApp;$(SolutionDir)References\Code-Red;$(IncludePath)</IncludePath>
     <LibraryPath>$(VULKAN_SDK)\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -207,6 +207,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\References\Code-Red\CodeRed\CodeRed.vcxproj">
       <Project>{078ae23f-1cc2-43b5-9096-f6238c363520}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\References\Code-Red\Extensions\ImGui\ImGui.vcxproj">
+      <Project>{f3acdf05-0a62-466b-a39b-d616b30cb5c5}</Project>
     </ProjectReference>
     <ProjectReference Include="..\DemoApp\DemoApp.vcxproj">
       <Project>{dbaba138-93c7-4bf0-8ec1-aa2b33d4560b}</Project>

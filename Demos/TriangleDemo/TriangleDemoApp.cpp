@@ -1,5 +1,24 @@
 #include "TriangleDemoApp.hpp"
 
+TriangleDemoUIComponent::TriangleDemoUIComponent()
+{
+	//build the ui using ImGui
+	mView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			//edit the color of triangle
+			ImGui::ColorEdit4("Triangle Color", reinterpret_cast<float*>(&Color));
+
+			//edit the vertices of triangle
+			if (ImGui::TreeNode("Triangle Vertices")) {
+				ImGui::InputFloat3("v0", reinterpret_cast<float*>(&TrianglePositions[0]));
+				ImGui::InputFloat3("v1", reinterpret_cast<float*>(&TrianglePositions[1]));
+				ImGui::InputFloat3("v2", reinterpret_cast<float*>(&TrianglePositions[2]));
+
+				ImGui::TreePop();
+			}
+		});
+}
+
 TriangleDemoApp::TriangleDemoApp(
 	const std::string& name,
 	const size_t width,
@@ -26,7 +45,12 @@ TriangleDemoApp::~TriangleDemoApp()
 
 void TriangleDemoApp::update(float delta)
 {
-	
+	mImGuiWindows->update();
+
+	CodeRed::ResourceHelper::updateBuffer(
+		mFrameResources[mCurrentFrameIndex].get<CodeRed::GpuBuffer>("VertexBuffer"),
+		mUIComponent->TrianglePositions, 
+		sizeof(mUIComponent->TrianglePositions));	
 }
 
 void TriangleDemoApp::render(float delta)
@@ -35,6 +59,8 @@ void TriangleDemoApp::render(float delta)
 		mFrameResources[mCurrentFrameIndex].get<CodeRed::GpuFrameBuffer>("FrameBuffer");
 	const auto descriptorHeap =
 		mFrameResources[mCurrentFrameIndex].get<CodeRed::GpuDescriptorHeap>("DescriptorHeap");
+	const auto vertexBuffer =
+		mFrameResources[mCurrentFrameIndex].get<CodeRed::GpuBuffer>("VertexBuffer");
 
 	mCommandQueue->waitIdle();
 	mCommandAllocator->reset();
@@ -47,7 +73,7 @@ void TriangleDemoApp::render(float delta)
 	mCommandList->setViewPort(frameBuffer->fullViewPort());
 	mCommandList->setScissorRect(frameBuffer->fullScissorRect());
 
-	mCommandList->setVertexBuffer(mVertexBuffer);
+	mCommandList->setVertexBuffer(vertexBuffer);
 	
 	mCommandList->setDescriptorHeap(descriptorHeap);
 
@@ -55,10 +81,17 @@ void TriangleDemoApp::render(float delta)
 		mPipelineInfo->renderPass(),
 		frameBuffer);
 
-	mCommandList->setConstant32Bits({ 1.0f, 0.0f, 0.0f, 1.0f });
+	mCommandList->setConstant32Bits({
+		mUIComponent->Color.r,
+		mUIComponent->Color.g,
+		mUIComponent->Color.b,
+		mUIComponent->Color.a
+	});
 
 	mCommandList->draw(3);
 
+	mImGuiWindows->draw(mCommandList);
+	
 	mCommandList->endRenderPass();
 
 	mCommandList->endRecording();
@@ -97,6 +130,7 @@ void TriangleDemoApp::initialize()
 	initializeSamplers();
 	initializeTextures();
 	initializePipeline();
+	initializeImGuiWindows();
 	initializeDescriptorHeaps();
 }
 
@@ -132,41 +166,28 @@ void TriangleDemoApp::initializeSwapChain()
 
 void TriangleDemoApp::initializeBuffers()
 {
-	mVertexBuffer = mDevice->createBuffer(
-		CodeRed::ResourceInfo::VertexBuffer(
-			sizeof(glm::vec3),
-			3,
-			CodeRed::MemoryHeap::Upload
-		)
-	);
-
 	mViewBuffer = mDevice->createBuffer(
 		CodeRed::ResourceInfo::ConstantBuffer(
 			sizeof(glm::mat4x4)
 		)
 	);
 
-	glm::vec3 triangleVertices[] = {
-		glm::vec3(0.5f, 0.25f, 0.0f),
-		glm::vec3(0.70f, 0.5f, 0.0f),
-		glm::vec3(0.30f,0.5f,0.0f)
-	};
-
-	for (auto& vertex : triangleVertices)
-		vertex = vertex * glm::vec3(width(), height(), 1.0f);
-
 	auto viewMatrix = glm::orthoLH_ZO(0.0f,
 		static_cast<float>(width()),
 		static_cast<float>(height()), 0.0f, 0.0f, 1.0f);
 
-	const auto triangleMemory = mVertexBuffer->mapMemory();
-	const auto viewMemory = mViewBuffer->mapMemory();
+	CodeRed::ResourceHelper::updateBuffer(mViewBuffer, &viewMatrix, sizeof(viewMatrix));
 
-	std::memcpy(triangleMemory, triangleVertices, sizeof(triangleVertices));
-	std::memcpy(viewMemory, &viewMatrix, sizeof(viewMatrix));
-
-	mVertexBuffer->unmapMemory();
-	mViewBuffer->unmapMemory();
+	for (auto& frameResource : mFrameResources) {
+		frameResource.set(
+			"VertexBuffer",
+			mDevice->createBuffer(
+				CodeRed::ResourceInfo::VertexBuffer(
+					sizeof(glm::vec3), 
+					3,
+					CodeRed::MemoryHeap::Upload)
+			));
+	}
 }
 
 void TriangleDemoApp::initializeShaders()
@@ -268,6 +289,30 @@ void TriangleDemoApp::initializePipeline()
 	);
 
 	mPipelineInfo->updateState();
+}
+
+void TriangleDemoApp::initializeImGuiWindows()
+{
+	mUIComponent = std::make_shared<TriangleDemoUIComponent>();
+	
+	//initialize the UI values
+	mUIComponent->TrianglePositions[0] = glm::vec3(0.50f * width(), 0.25f * height(), 0.0f);
+	mUIComponent->TrianglePositions[1] = glm::vec3(0.70f * width(), 0.50f * height(), 0.0f);
+	mUIComponent->TrianglePositions[2] = glm::vec3(0.30f * width(), 0.50f * height(), 0.0f);
+	mUIComponent->Color = glm::vec4(1, 0, 0, 1);
+	
+	//for high dpi display device, you need change the scale.
+	ImGui::GetIO().FontGlobalScale = 1.5f;
+	
+	mImGuiWindows = std::make_shared<CodeRed::ImGuiWindows>(
+		mDevice,
+		mPipelineInfo->renderPass(),
+		mCommandAllocator,
+		mCommandQueue,
+		maxFrameResources);
+
+	//add the ui component to windows
+	mImGuiWindows->add("Tool", "Triangle Property", mUIComponent->view());
 }
 
 void TriangleDemoApp::initializeDescriptorHeaps()

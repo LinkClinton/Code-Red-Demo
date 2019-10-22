@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/CodeRedGraphics.hpp>
+#include <CodeRed/Core/CodeRedGraphics.hpp>
 
 #include <Windows.h>
 
@@ -18,7 +18,7 @@ namespace Demo {
 			const size_t width,
 			const size_t height);
 
-		virtual ~DemoApp() = default;
+		virtual ~DemoApp();
 		
 		void show() const;
 

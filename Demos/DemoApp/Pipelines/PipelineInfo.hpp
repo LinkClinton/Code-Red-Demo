@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/CodeRedGraphics.hpp>
+#include <CodeRed/Core/CodeRedGraphics.hpp>
 
 namespace CodeRed {
 

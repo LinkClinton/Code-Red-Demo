@@ -4,6 +4,8 @@
 #include <Resources/ResourceHelper.hpp>
 #include <DemoApp.hpp>
 
+#include <Extensions/ImGui/ImGuiWindows.hpp>
+
 struct Particle {
 	glm::vec2 Position = glm::vec2(0);
 	glm::vec2 Forward = glm::vec2(0);
@@ -21,6 +23,21 @@ struct Particle {
 		glm::vec2& offset,
 		const size_t width,
 		const size_t height);
+};
+
+struct ParticlesDemoUIComponent {
+	std::optional<std::vector<Particle>*> Particles;
+	
+	bool Pause = false;
+
+	ParticlesDemoUIComponent();
+
+	auto programStateView() const -> std::shared_ptr<CodeRed::ImGuiView> { return mProgramStateView; }
+
+	auto particlesView() const -> std::shared_ptr<CodeRed::ImGuiView> { return mParticlesView; }
+private:
+	std::shared_ptr<CodeRed::ImGuiView> mProgramStateView;
+	std::shared_ptr<CodeRed::ImGuiView> mParticlesView;
 };
 
 class ParticlesDemoApp final : public Demo::DemoApp {
@@ -52,6 +69,8 @@ private:
 
 	void initializePipeline();
 
+	void initializeImGuiWindows();
+	
 	void initializeDescriptorHeaps();
 private:
 	const size_t maxFrameResources = 2;
@@ -59,7 +78,7 @@ private:
 	const size_t particleCount = 2000;
 	
 	size_t mCurrentFrameIndex = 0;
-
+	
 	std::shared_ptr<CodeRed::GpuLogicalDevice> mDevice;
 	std::shared_ptr<CodeRed::GpuSwapChain> mSwapChain;
 
@@ -79,6 +98,9 @@ private:
 	std::shared_ptr<CodeRed::GpuPipelineFactory> mPipelineFactory;
 	std::shared_ptr<CodeRed::PipelineInfo> mPipelineInfo;
 
+	std::shared_ptr<CodeRed::ImGuiWindows> mImGuiWindows;
+	std::shared_ptr<ParticlesDemoUIComponent> mUIComponent;
+	
 	std::shared_ptr<ParticleTextureGenerator> mParticleTextureGenerator;
 	
 	std::vector<CodeRed::Byte> mVertexShaderCode;
