@@ -9,6 +9,8 @@
 
 #include <DemoApp.hpp>
 
+#include <Extensions/ImGui/ImGuiWindows.hpp>
+
 #define __DIRECTX12__MODE__
 #define __VULKAN__MODE__
 
@@ -23,6 +25,34 @@ struct Sphere {
 	glm::vec1 Radius = glm::vec1(1);
 
 	Sphere() = default;
+};
+
+struct EffectPassDemoUIComponent {
+public:
+#ifdef __TEXTURE__MATERIAL__MODE__
+	std::string TextureMaterialName;
+#endif
+
+	glm::vec4 AmbientLight = glm::vec4(0.0f);
+	float LightFactor = 0.0f;
+	CodeRed::Light Light;
+
+	EffectPassDemoUIComponent();
+	
+	auto programStateView() const -> std::shared_ptr<CodeRed::ImGuiView> { return mProgramStateView; }
+
+	auto lightView() const -> std::shared_ptr<CodeRed::ImGuiView> { return mLightView; }
+
+#ifdef __TEXTURE__MATERIAL__MODE__
+	auto textureMaterialView() const -> std::shared_ptr<CodeRed::ImGuiView> { return mTextureMaterialView; }
+#endif
+private:
+	std::shared_ptr<CodeRed::ImGuiView> mProgramStateView;
+	std::shared_ptr<CodeRed::ImGuiView> mLightView;
+	
+#ifdef __TEXTURE__MATERIAL__MODE__
+	std::shared_ptr<CodeRed::ImGuiView> mTextureMaterialView;
+#endif
 };
 
 class EffectPassDemoApp final : public Demo::DemoApp {
@@ -64,6 +94,8 @@ private:
 
 	void initializePipeline();
 
+	void initializeImGuiWindows();
+	
 	void initializeDescriptorHeaps();
 
 	auto getTextureMaterial(const std::string& name) -> TextureMaterial;
@@ -97,6 +129,9 @@ private:
 
 	std::shared_ptr<CodeRed::GpuRenderPass> mRenderPass;
 
+	std::shared_ptr<EffectPassDemoUIComponent> mUIComponent;
+	std::shared_ptr<CodeRed::ImGuiWindows> mImGuiWindows;
+	
 	std::vector<CodeRed::Transform3D> mTransforms = std::vector<CodeRed::Transform3D>(sphereCount);
 	
 	std::vector<Material> mMaterials = std::vector<Material>(sphereCount);

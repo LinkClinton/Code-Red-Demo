@@ -14,6 +14,14 @@ Demos for [Code-Red](https://github.com/LinkClinton/Code-Red/tree/master)(A Grap
 
 - [TriangleDemo](https://github.com/LinkClinton/Code-Red-Demo/tree/master/Demos/TriangleDemo) : Render Triangle, Constant32Bits.
 
+## Screenshots
+
+There are some screen shots of demos.
+
+![effect_pass_pbr_0](./Screenshots/effect_pass_pbr_0.jpg)
+
+![effect_pass_pbr_1](./Screenshots/effect_pass_pbr_1.jpg)
+
 ## References
 
 -  [Code-Red](https://github.com/LinkClinton/Code-Red/tree/master) :A Graphics Interface for DirectX12 and Vulkan.

@@ -1,5 +1,25 @@
 #include "FlowersDemoApp.hpp"
 
+FlowersDemoUIComponent::FlowersDemoUIComponent()
+{	
+	mProgramStateView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			ImGui::Text("DemoApp average %.3f ms/frame (%.1f FPS)",
+				1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+			const auto* text = Pause == true ? "Continue" : "Pause";
+
+			if (ImGui::Button(text)) Pause ^= true;
+		});
+
+	mFlowersView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			ImGui::SliderInt("Flowers", 
+				reinterpret_cast<int*>(&NowFlowers), 
+				0, static_cast<int>(MaxFlowers));
+		});
+}
+
 FlowersDemoApp::FlowersDemoApp(
 	const std::string& name,
 	const size_t width,
@@ -26,13 +46,16 @@ FlowersDemoApp::~FlowersDemoApp()
 
 void FlowersDemoApp::update(float delta)
 {
-	mFlowersGenerator->update(delta);
+	//when we pause the program, we do not update the flowers
+	if (mUIComponent->Pause == false) mFlowersGenerator->update(delta);
 
 	const auto buffer = mFrameResources[mCurrentFrameIndex].get<CodeRed::GpuBuffer>("TransformedPositions");
 
 	const auto memory = buffer->mapMemory();
 	std::memcpy(memory, mFlowersGenerator->positions(), buffer->size());
 	buffer->unmapMemory();
+
+	mImGuiWindows->update();
 }
 
 void FlowersDemoApp::render(float delta)
@@ -62,8 +85,10 @@ void FlowersDemoApp::render(float delta)
 		mPipelineInfo->renderPass(),
 		frameBuffer);
 
-	mCommandList->drawIndexed(3, flowersCount * 8);
+	mCommandList->drawIndexed(3, mUIComponent->NowFlowers * 8);
 
+	mImGuiWindows->draw(mCommandList);
+	
 	mCommandList->endRenderPass();
 
 	mCommandList->endRecording();
@@ -103,6 +128,7 @@ void FlowersDemoApp::initialize()
 	initializeSamplers();
 	initializeTextures();
 	initializePipeline();
+	initializeImGuiWindows();
 	initializeDescriptorHeaps();
 }
 
@@ -322,6 +348,27 @@ void FlowersDemoApp::initializePipeline()
 	);
 
 	mPipelineInfo->updateState();
+}
+
+void FlowersDemoApp::initializeImGuiWindows()
+{
+	mUIComponent = std::make_shared<FlowersDemoUIComponent>();
+	mUIComponent->MaxFlowers = flowersCount;
+	mUIComponent->NowFlowers = flowersCount;
+	mUIComponent->Pause = false;
+
+	//for high dpi display device, you need change the scale.
+	ImGui::GetIO().FontGlobalScale = 1.5f;
+
+	mImGuiWindows = std::make_shared<CodeRed::ImGuiWindows>(
+		mDevice,
+		mPipelineInfo->renderPass(),
+		mCommandAllocator,
+		mCommandQueue,
+		maxFrameResources);
+
+	mImGuiWindows->add("Tool", "Program State", mUIComponent->programStateView());
+	mImGuiWindows->add("Tool", "Flowers", mUIComponent->flowersView());
 }
 
 void FlowersDemoApp::initializeDescriptorHeaps()

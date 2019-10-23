@@ -2,8 +2,14 @@
 
 TriangleDemoUIComponent::TriangleDemoUIComponent()
 {
+	mProgramStateView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			ImGui::Text("DemoApp average %.3f ms/frame (%.1f FPS)",
+				1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		});
+	
 	//build the ui using ImGui
-	mView = std::make_shared<CodeRed::ImGuiView>([&]
+	mTriangleView = std::make_shared<CodeRed::ImGuiView>([&]
 		{
 			//edit the color of triangle
 			ImGui::ColorEdit4("Triangle Color", reinterpret_cast<float*>(&Color));
@@ -312,7 +318,8 @@ void TriangleDemoApp::initializeImGuiWindows()
 		maxFrameResources);
 
 	//add the ui component to windows
-	mImGuiWindows->add("Tool", "Triangle Property", mUIComponent->view());
+	mImGuiWindows->add("Tool", "Program State", mUIComponent->programStateView());
+	mImGuiWindows->add("Tool", "Triangle Property", mUIComponent->triangleView());
 }
 
 void TriangleDemoApp::initializeDescriptorHeaps()

@@ -22,27 +22,30 @@ void Particle::reverseIfOut(glm::vec2& offset, const size_t width, const size_t 
 
 ParticlesDemoUIComponent::ParticlesDemoUIComponent()
 {
-	mParticlesView = std::make_shared<CodeRed::ImGuiView>([&]
-		{
-			if (Particles.has_value() == false) return;
-		
-			ImGui::BeginChild("Particle Positions");
-	
-			for (size_t index = 0; index < Particles.value()->size(); index++) {
-				const auto& particle = (*Particles.value())[index];
-				
-				ImGui::Text("Particle %u : (%.3f, %.3f)", index,
-					particle.Position.x, particle.Position.y);
-			}
-		
-			ImGui::EndChild();
-		});
-
 	mProgramStateView = std::make_shared<CodeRed::ImGuiView>([&]
 		{
+			ImGui::Text("DemoApp average %.3f ms/frame (%.1f FPS)",
+				1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		
 			const auto* text = Pause == true ? "Continue" : "Pause";
 
 			if (ImGui::Button(text)) Pause ^= true;
+		});
+
+	mParticlesView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			if (Particles.has_value() == false) return;
+
+			ImGui::BeginChild("Particle Positions");
+
+			for (size_t index = 0; index < Particles.value()->size(); index++) {
+				const auto& particle = (*Particles.value())[index];
+
+				ImGui::Text("Particle %u : (%.3f, %.3f)", index,
+					particle.Position.x, particle.Position.y);
+			}
+
+			ImGui::EndChild();
 		});
 }
 

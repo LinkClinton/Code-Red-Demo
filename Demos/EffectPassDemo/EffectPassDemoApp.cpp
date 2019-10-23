@@ -2,6 +2,45 @@
 
 #include <random>
 
+EffectPassDemoUIComponent::EffectPassDemoUIComponent()
+{
+	mProgramStateView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			ImGui::Text("DemoApp average %.3f ms/frame (%.1f FPS)",
+				1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		});
+
+	mLightView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			ImGui::SliderFloat("LightFactor", &LightFactor, 0.0f, 5.0f);
+		
+			ImGui::InputFloat4("AmbientLight", reinterpret_cast<float*>(&AmbientLight));
+			ImGui::InputFloat3("LightStrength", reinterpret_cast<float*>(&Light.Strength));
+			ImGui::InputFloat3("LightPosition", reinterpret_cast<float*>(&Light.Position));
+			ImGui::InputFloat("FalloffStart", &Light.FalloffStart.x);
+			ImGui::InputFloat("FalloffEnd", &Light.FalloffEnd.x);
+		});
+
+	static std::vector<std::string> materialNames = {
+		"broken_down_concrete2",
+		"grimy-metal",
+		"metalgrid1",
+		"plasticpattern1",
+		"synth-rubber",
+		"wornpaintedcement"
+	};
+	
+#ifdef __TEXTURE__MATERIAL__MODE__
+	mTextureMaterialView = std::make_shared<CodeRed::ImGuiView>([&]
+		{
+			for (size_t index = 0; index < materialNames.size(); index++) {
+				if (ImGui::Button(materialNames[index].c_str()))
+					TextureMaterialName = materialNames[index];
+			}
+		});
+#endif
+}
+
 EffectPassDemoApp::EffectPassDemoApp(
 	const std::string& name,
 	const size_t width,
@@ -51,8 +90,22 @@ void EffectPassDemoApp::update(float delta)
 	
 	effectPass->setTransforms(mTransforms);
 	effectPass->setMaterials(mMaterials);
+	effectPass->setLight(CodeRed::LightType::Point, 0,
+		CodeRed::Light::PointLight(
+			mUIComponent->Light.Strength * mUIComponent->LightFactor,
+			mUIComponent->Light.Position,
+			mUIComponent->Light.FalloffStart,
+			mUIComponent->Light.FalloffEnd
+		));
+	effectPass->setAmbientLight(mUIComponent->AmbientLight);
+
+#ifdef __TEXTURE__MATERIAL__MODE__
+	effectPass->setTextureMaterial(getTextureMaterial(mUIComponent->TextureMaterialName));
+#endif
 
 	effectPass->updateToGpu(mCommandAllocator, mCommandQueue);
+
+	mImGuiWindows->update();
 }
 
 void EffectPassDemoApp::render(float delta)
@@ -80,12 +133,12 @@ void EffectPassDemoApp::render(float delta)
 	mCommandList->setVertexBuffer(mVertexBuffer);
 	mCommandList->setIndexBuffer(mIndexBuffer);
 
-	effectPass->beginEffect(mCommandList);
-	
 	//begin render pass and set frame buffer
 	mCommandList->beginRenderPass(
 		mRenderPass,
 		frameBuffer);
+
+	effectPass->beginEffect(mCommandList);
 
 	//add some draw commands
 	//the draw commands must between the render pass
@@ -95,10 +148,12 @@ void EffectPassDemoApp::render(float delta)
 	effectPass->drawIndexed(mIndexBuffer->count(), sphereCount);
 #endif
 
+	effectPass->endEffect();
+
+	mImGuiWindows->draw(mCommandList);
+
 	mCommandList->endRenderPass();
 
-	effectPass->endEffect();
-	
 	mCommandList->endRecording();
 
 	//execute the commands recording by command list
@@ -137,6 +192,7 @@ void EffectPassDemoApp::initialize()
 	initializeSamplers();
 	initializeTextures();
 	initializePipeline();
+	initializeImGuiWindows();
 	initializeDescriptorHeaps();
 }
 
@@ -409,31 +465,37 @@ void EffectPassDemoApp::initializePipeline()
 				mRenderPass,
 				sphereCount)
 		);
+	}
+}
 
-		auto effectPass = frameResource.get<EffectPass>("EffectPass");
-
-#ifdef __PBR__MODE__
-		const auto lightFactor = 2.0f;
-#else
-		const auto lightFactor = 2.0f;
-#endif
-
-		effectPass->setLight(CodeRed::LightType::Point, 0,
-			CodeRed::Light::PointLight(
-				glm::vec3(0.5f * lightFactor),
-				glm::vec3(0, 0, -150),
-				glm::vec1(200),
-				glm::vec1(300)
-			));
-
-		effectPass->setAmbientLight(glm::vec4(0.2f));
+void EffectPassDemoApp::initializeImGuiWindows()
+{
+	mUIComponent = std::make_shared<EffectPassDemoUIComponent>();
+	mUIComponent->AmbientLight = glm::vec4(0.2f);
+	mUIComponent->LightFactor = 2.0f;
+	mUIComponent->Light = CodeRed::Light::PointLight(
+		glm::vec3(0.5f),
+		glm::vec3(0, 0, -150),
+		glm::vec1(200),
+		glm::vec1(300));
 
 #ifdef __TEXTURE__MATERIAL__MODE__
-		effectPass->setTextureMaterial(getTextureMaterial("wornpaintedcement"));
+	mUIComponent->TextureMaterialName = "wornpaintedcement";
 #endif
-		
-		effectPass->updateToGpu(mCommandAllocator, mCommandQueue);
-	}
+
+	mImGuiWindows = std::make_shared<CodeRed::ImGuiWindows>(
+		mDevice,
+		mRenderPass,
+		mCommandAllocator,
+		mCommandQueue,
+		maxFrameResources);
+
+	mImGuiWindows->add("Tool", "Program State", mUIComponent->programStateView());
+	mImGuiWindows->add("Tool", "Light", mUIComponent->lightView());
+	
+#ifdef __TEXTURE__MATERIAL__MODE__
+	mImGuiWindows->add("Tool", "Texture Material", mUIComponent->textureMaterialView());
+#endif
 }
 
 void EffectPassDemoApp::initializeDescriptorHeaps()
@@ -446,6 +508,10 @@ auto EffectPassDemoApp::getTextureMaterial(const std::string& name) -> TextureMa
 {
 	if (mTextureMaterials.find(name) != mTextureMaterials.end()) return mTextureMaterials[name];
 
+	//if the material is not existed, we need to load
+	//for saving memory space, we will delete the old material.
+	mTextureMaterials.clear();
+	
 	TextureMaterial material;
 
 	material.DiffuseAlbedo = CodeRed::ResourceHelper::loadTexture(
@@ -471,4 +537,3 @@ auto EffectPassDemoApp::getTextureMaterial(const std::string& name) -> TextureMa
 
 	return material;
 }
-

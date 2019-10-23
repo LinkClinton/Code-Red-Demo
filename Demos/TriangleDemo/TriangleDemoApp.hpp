@@ -19,10 +19,13 @@ struct TriangleDemoUIComponent {
 	glm::vec4 Color;
 
 	TriangleDemoUIComponent();
+
+	auto programStateView() const -> std::shared_ptr<CodeRed::ImGuiView> { return mProgramStateView; }
 	
-	auto view() const -> std::shared_ptr<CodeRed::ImGuiView> { return mView; }
+	auto triangleView() const -> std::shared_ptr<CodeRed::ImGuiView> { return mTriangleView; }
 private:
-	std::shared_ptr<CodeRed::ImGuiView> mView;
+	std::shared_ptr<CodeRed::ImGuiView> mProgramStateView;
+	std::shared_ptr<CodeRed::ImGuiView> mTriangleView;
 };
 
 class TriangleDemoApp final : public Demo::DemoApp {
