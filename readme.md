@@ -26,8 +26,14 @@ There are some screen shots of demos.
 
 -  [Code-Red](https://github.com/LinkClinton/Code-Red/tree/master) :A Graphics Interface for DirectX12 and Vulkan.
 
+## Requirement
+
+- [Python3](https://www.python.org/)
+
 ## ThirdParties
 
 - [glm](https://github.com/g-truc/glm) : OpenGL Mathematics (GLM) 
 
 - [shaderc](https://github.com/google/shaderc) : A collection of tools, libraries, and tests for Vulkan shader compilation.
+
+- [stb](https://github.com/nothings/stb) : stb single-file public domain libraries for C/C++.
