@@ -17,7 +17,7 @@
 #define __PBR__MODE__
 
 #ifdef __PBR__MODE__
-#define __TEXTURE__MATERIAL__MODE__
+//#define __TEXTURE__MATERIAL__MODE__
 #endif
 
 struct Sphere {

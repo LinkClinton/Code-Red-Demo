@@ -294,6 +294,7 @@ void EffectPassDemoApp::initializeSwapChain()
 		CodeRed::ResourceInfo::Texture2D(
 			mSwapChain->width(), mSwapChain->height(),
 			CodeRed::PixelFormat::Depth32BitFloat,
+			1,
 			CodeRed::ResourceUsage::DepthStencil
 		)
 	);

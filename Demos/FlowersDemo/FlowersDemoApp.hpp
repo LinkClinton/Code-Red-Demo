@@ -10,7 +10,7 @@
 
 #include "FlowersGenerator.hpp"
 
-#define __DIRECTX12__MODE__
+//#define __DIRECTX12__MODE__
 #define __VULKAN__MODE__
 
 #include <glm/gtc/matrix_transform.hpp>

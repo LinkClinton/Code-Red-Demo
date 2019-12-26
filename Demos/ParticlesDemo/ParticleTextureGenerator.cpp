@@ -157,8 +157,9 @@ void ParticleTextureGenerator::initializeTextures()
 	mTexture = mDevice->createTexture(
 		CodeRed::ResourceInfo::Texture2D(
 			mDetailSize,
-			mDetailSize,
+			mDetailSize, 
 			CodeRed::PixelFormat::RedGreenBlueAlpha8BitUnknown,
+			1,
 			CodeRed::ResourceUsage::RenderTarget
 		)
 	);
