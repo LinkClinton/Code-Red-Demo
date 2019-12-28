@@ -11,13 +11,13 @@
 
 #include <Extensions/ImGui/ImGuiWindows.hpp>
 
-#define __DIRECTX12__MODE__
+//#define __DIRECTX12__MODE__
 #define __VULKAN__MODE__
 
 #define __PBR__MODE__
 
 #ifdef __PBR__MODE__
-//#define __TEXTURE__MATERIAL__MODE__
+#define __TEXTURE__MATERIAL__MODE__
 #endif
 
 struct Sphere {

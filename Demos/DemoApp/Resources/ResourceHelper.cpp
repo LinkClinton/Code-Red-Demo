@@ -82,22 +82,41 @@ void CodeRed::ResourceHelper::updateTexture(
 	auto commandList = device->createGraphicsCommandList(allocator);
 	auto commandQueue = queue;
 
+	size_t offset = 0;
+
+	auto bufferPool = std::vector<std::shared_ptr<GpuTextureBuffer>>();
+
 	auto oldLayout = texture->layout();
 
 	CODE_RED_TRY_EXECUTE(
 		oldLayout == ResourceLayout::Undefined,
 		oldLayout = ResourceLayout::GeneralRead
 	);
-	
-	commandList->beginRecording();
 
+	commandList->beginRecording();
 	commandList->layoutTransition(texture, ResourceLayout::CopyDestination);
 
-	commandList->copyMemoryToTexture(texture, data);
+	for (size_t arraySlice = 0; arraySlice < texture->arrays(); arraySlice++) {
+		for (size_t mipSlice = 0; mipSlice < texture->mipLevels(); mipSlice++) {
+			const auto buffer = device->createTextureBuffer(texture, mipSlice);
+
+			buffer->write(static_cast<const unsigned char*>(data) + offset);
+
+			offset = offset + buffer->size();
+
+			commandList->layoutTransition(buffer, ResourceLayout::CopySource);
+			commandList->copyBufferToTexture(
+				TextureBufferCopyInfo(buffer),
+				TextureCopyInfo(texture, texture->index(mipSlice, arraySlice)),
+				buffer->width(), buffer->height(), buffer->depth());
+
+			bufferPool.push_back(buffer);
+		}
+	}
 
 	commandList->layoutTransition(texture, oldLayout);
-
 	commandList->endRecording();
+
 	commandQueue->execute({ commandList });
 	commandQueue->waitIdle();
 }
