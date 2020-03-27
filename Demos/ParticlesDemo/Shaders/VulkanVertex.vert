@@ -20,7 +20,6 @@ void main()
 {
     gl_Position = position * transpose(transforms.world[gl_InstanceIndex]);
     gl_Position = gl_Position * transpose(view.view);
-    gl_Position.y = -gl_Position.y;
 
     outTexcoord = texcoord;
 }

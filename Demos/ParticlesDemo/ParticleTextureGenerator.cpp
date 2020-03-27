@@ -165,7 +165,7 @@ void ParticleTextureGenerator::initializeTextures()
 	);
 
 	mFrameBuffer = mDevice->createFrameBuffer(
-		mTexture,
+		{ mTexture->reference() },
 		nullptr
 	);
 }
@@ -223,9 +223,11 @@ void ParticleTextureGenerator::initializePipeline()
 
 	mPipelineInfo->setRenderPass(
 		mDevice->createRenderPass(
-			CodeRed::Attachment::RenderTarget(mFrameBuffer->renderTarget()->format(),
+			{
+				CodeRed::Attachment::RenderTarget(mFrameBuffer->renderTarget()->format(),
 				CodeRed::ResourceLayout::RenderTarget,
 				CodeRed::ResourceLayout::GeneralRead)
+			}
 		)
 	);
 	

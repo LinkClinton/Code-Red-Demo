@@ -310,7 +310,7 @@ void ParticlesDemoApp::initializeSwapChain()
 		mFrameResources[index].set(
 			"FrameBuffer",
 			mDevice->createFrameBuffer(
-				mSwapChain->buffer(index),
+				{ mSwapChain->buffer(index)->reference() },
 				nullptr
 			)
 		);
@@ -396,20 +396,22 @@ void ParticlesDemoApp::initializePipeline()
 	mPipelineInfo->setBlendState(
 		mPipelineFactory->createBlendState(
 			{
-				true,
+				CodeRed::BlendProperty{
+					true,
 				CodeRed::BlendOperator::Add,
 				CodeRed::BlendOperator::Add,
 				CodeRed::BlendFactor::InvSrcAlpha,
 				CodeRed::BlendFactor::InvSrcAlpha,
 				CodeRed::BlendFactor::SrcAlpha,
 				CodeRed::BlendFactor::SrcAlpha
+					}
 			}
 		)
 	);
 
 	mPipelineInfo->setRenderPass(
 		mDevice->createRenderPass(
-			CodeRed::Attachment::RenderTarget(mSwapChain->format())
+			{ CodeRed::Attachment::RenderTarget(mSwapChain->format()) }
 		)
 	);
 	

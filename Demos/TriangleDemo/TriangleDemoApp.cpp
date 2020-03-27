@@ -163,7 +163,7 @@ void TriangleDemoApp::initializeSwapChain()
 		mFrameResources[index].set(
 			"FrameBuffer",
 			mDevice->createFrameBuffer(
-				mSwapChain->buffer(index),
+				{ mSwapChain->buffer(index)->reference() },
 				nullptr
 			)
 		);
@@ -290,7 +290,7 @@ void TriangleDemoApp::initializePipeline()
 
 	mPipelineInfo->setRenderPass(
 		mDevice->createRenderPass(
-			CodeRed::Attachment::RenderTarget(mSwapChain->format())
+			{ CodeRed::Attachment::RenderTarget(mSwapChain->format()) }
 		)
 	);
 

@@ -291,11 +291,10 @@ void EffectPassDemoApp::initializeSwapChain()
 	);
 
 	mDepthBuffer = mDevice->createTexture(
-		CodeRed::ResourceInfo::Texture2D(
+		CodeRed::ResourceInfo::DepthStencil(
 			mSwapChain->width(), mSwapChain->height(),
 			CodeRed::PixelFormat::Depth32BitFloat,
-			1,
-			CodeRed::ResourceUsage::DepthStencil
+			CodeRed::ClearValue(1, 0)
 		)
 	);
 	
@@ -303,8 +302,8 @@ void EffectPassDemoApp::initializeSwapChain()
 		mFrameResources[index].set(
 			"FrameBuffer",
 			mDevice->createFrameBuffer(
-				mSwapChain->buffer(index),
-				mDepthBuffer
+				{ mSwapChain->buffer(index)->reference() },
+				mDepthBuffer->reference()
 			)
 		);
 	}
@@ -451,11 +450,12 @@ void EffectPassDemoApp::initializePipeline()
 	//you can use setXXX to set the graphics pipeline state
 	//but you should use "updateState()" to create graphics pipeline
 	mRenderPass = mDevice->createRenderPass(
-		CodeRed::Attachment::RenderTarget(mSwapChain->format()),
+		{ CodeRed::Attachment::RenderTarget(mSwapChain->format()) },
 		CodeRed::Attachment::DepthStencil(mDepthBuffer->format())
 	);
 
-	mRenderPass->setClear(CodeRed::ClearValue(0.27f, 0.27f, 0.27f, 1.0f));
+	mRenderPass->setClear(CodeRed::ClearValue(0.27f, 0.27f, 0.27f, 1.0f),
+		CodeRed::ClearValue(1, 0));
 
 	auto pipelineFactory = mDevice->createPipelineFactory();
 	

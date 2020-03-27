@@ -161,7 +161,7 @@ void FlowersDemoApp::initializeSwapChain()
 		mFrameResources[index].set(
 			"FrameBuffer",
 			mDevice->createFrameBuffer(
-				mSwapChain->buffer(index),
+				{ mSwapChain->buffer(index)->reference() },
 				nullptr
 			)
 		);
@@ -329,7 +329,7 @@ void FlowersDemoApp::initializePipeline()
 
 	mPipelineInfo->setBlendState(
 		mPipelineFactory->createBlendState(
-			{
+			{ CodeRed::BlendProperty{
 				true,
 				CodeRed::BlendOperator::Add,
 				CodeRed::BlendOperator::Add,
@@ -337,13 +337,13 @@ void FlowersDemoApp::initializePipeline()
 				CodeRed::BlendFactor::InvSrcAlpha,
 				CodeRed::BlendFactor::SrcAlpha,
 				CodeRed::BlendFactor::SrcAlpha
-			}
+			} }
 		)
 	);
 
 	mPipelineInfo->setRenderPass(
 		mDevice->createRenderPass(
-			CodeRed::Attachment::RenderTarget(mSwapChain->format())
+			{ CodeRed::Attachment::RenderTarget(mSwapChain->format()) }
 		)
 	);
 

@@ -11,5 +11,4 @@ layout (location = 0) in vec4 position;
 void main()
 {
     gl_Position = position * transpose(view.view);
-    gl_Position.y = -gl_Position.y;
 }

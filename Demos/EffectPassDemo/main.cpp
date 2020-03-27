@@ -1,7 +1,7 @@
 #include "EffectPassDemoApp.hpp"
 
 int main() {
-	auto app = EffectPassDemoApp("EffectPassDemoApp", 1920, 1080);
+	auto app = EffectPassDemoApp("EffectPassDemoApp", 1280, 720);
 
 	app.show();
 	app.runLoop();

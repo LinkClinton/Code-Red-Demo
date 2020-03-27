@@ -43,5 +43,4 @@ void main()
     instanceId = gl_InstanceIndex;
 
     gl_Position = vec4(position, 0.0f, 1.0f) * transpose(view.view);
-    gl_Position.y = -gl_Position.y;
 }

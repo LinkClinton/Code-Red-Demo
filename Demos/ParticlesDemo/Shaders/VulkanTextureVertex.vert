@@ -14,7 +14,6 @@ layout (location = 0) out vec2 outTexcoord;
 void main()
 {
     gl_Position = position * transpose(view.view);
-    gl_Position.y = -gl_Position.y;
-
+    
     outTexcoord = texcoord; 
 }

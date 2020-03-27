@@ -40,5 +40,4 @@ void main()
     outInstanceId = gl_InstanceIndex;
 
     gl_Position = transform.Projection * vec4(outViewPosition, 1.0f);
-    gl_Position.y = -gl_Position.y;
 }
