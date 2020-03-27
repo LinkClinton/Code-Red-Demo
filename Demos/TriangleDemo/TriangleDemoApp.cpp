@@ -6,6 +6,8 @@ TriangleDemoUIComponent::TriangleDemoUIComponent()
 		{
 			ImGui::Text("DemoApp average %.3f ms/frame (%.1f FPS)",
 				1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+			ImGui::Checkbox("MSAA4X", &EnableMSAA);
 		});
 	
 	//build the ui using ImGui
@@ -73,32 +75,54 @@ void TriangleDemoApp::render(float delta)
 
 	mCommandList->beginRecording();
 
-	mCommandList->setGraphicsPipeline(mPipelineInfo->graphicsPipeline());
-	mCommandList->setResourceLayout(mPipelineInfo->resourceLayout());
+	if (mUIComponent->EnableMSAA) {
+		mCommandList->setGraphicsPipeline(mMSAAPipelineInfo->graphicsPipeline());
+		mCommandList->setResourceLayout(mMSAAPipelineInfo->resourceLayout());
 
-	mCommandList->setViewPort(frameBuffer->fullViewPort());
-	mCommandList->setScissorRect(frameBuffer->fullScissorRect());
+		mCommandList->setViewPort(mMSAAFrameBuffer->fullViewPort());
+		mCommandList->setScissorRect(mMSAAFrameBuffer->fullScissorRect());
+	}
+	else {
+		mCommandList->setGraphicsPipeline(mPipelineInfo->graphicsPipeline());
+		mCommandList->setResourceLayout(mPipelineInfo->resourceLayout());
+
+		mCommandList->setViewPort(frameBuffer->fullViewPort());
+		mCommandList->setScissorRect(frameBuffer->fullScissorRect());
+	}
 
 	mCommandList->setVertexBuffer(vertexBuffer);
-	
+
 	mCommandList->setDescriptorHeap(descriptorHeap);
 
 	mCommandList->beginRenderPass(
-		mPipelineInfo->renderPass(),
-		frameBuffer);
+		mUIComponent->EnableMSAA ? mMSAAPipelineInfo->renderPass() : mPipelineInfo->renderPass(),
+		mUIComponent->EnableMSAA ? mMSAAFrameBuffer : frameBuffer);
 
 	mCommandList->setConstant32Bits({
 		mUIComponent->Color.r,
 		mUIComponent->Color.g,
 		mUIComponent->Color.b,
 		mUIComponent->Color.a
-	});
+		});
 
 	mCommandList->draw(3);
 
-	mImGuiWindows->draw(mCommandList);
+	if (!mUIComponent->EnableMSAA) mImGuiWindows->draw(mCommandList);
 	
 	mCommandList->endRenderPass();
+
+	if (mUIComponent->EnableMSAA) {
+		mCommandList->resolveTexture(
+			CodeRed::TextureResolveInfo(mMSAABuffer, 0),
+			CodeRed::TextureResolveInfo(mSwapChain->buffer(mCurrentFrameIndex), 0)
+		);
+		
+		mCommandList->beginRenderPass(mMSAAUIRenderPass, frameBuffer);
+
+		mImGuiWindows->draw(mCommandList);
+
+		mCommandList->endRenderPass();
+	}
 
 	mCommandList->endRecording();
 
@@ -222,12 +246,27 @@ void TriangleDemoApp::initializeSamplers()
 
 void TriangleDemoApp::initializeTextures()
 {
-	
+	mMSAABuffer = mDevice->createTexture(
+		CodeRed::ResourceInfo::RenderTargetMultiSample(
+			mSwapChain->width(), mSwapChain->height(),
+			mSwapChain->format(),
+			CodeRed::MultiSample::Count4,
+			CodeRed::ClearValue(1, 1, 1, 1)
+		)
+	);
+
+	mMSAAFrameBuffer = mDevice->createFrameBuffer(
+		{
+			mMSAABuffer->reference()
+		}
+	);
 }
 
 void TriangleDemoApp::initializePipeline()
 {
 	mPipelineInfo = std::make_shared<CodeRed::PipelineInfo>(mDevice);
+	mMSAAPipelineInfo = std::make_shared<CodeRed::PipelineInfo>(mDevice);
+	
 	mPipelineFactory = mDevice->createPipelineFactory();
 
 	mPipelineInfo->setInputAssemblyState(
@@ -239,6 +278,8 @@ void TriangleDemoApp::initializePipeline()
 		)
 	);
 
+	mMSAAPipelineInfo->setInputAssemblyState(mPipelineInfo->inputAssemblyState());
+	
 	mPipelineInfo->setResourceLayout(
 		mDevice->createResourceLayout(
 			{
@@ -248,6 +289,8 @@ void TriangleDemoApp::initializePipeline()
 			CodeRed::Constant32Bits(4, 1, 0)
 		)
 	);
+
+	mMSAAPipelineInfo->setResourceLayout(mPipelineInfo->resourceLayout());
 
 	//the name only enabled for vulkan version
 	//this is the entry of shader in glsl
@@ -260,11 +303,15 @@ void TriangleDemoApp::initializePipeline()
 		)
 	);
 
+	mMSAAPipelineInfo->setVertexShaderState(mPipelineInfo->vertexShaderState());
+
 	mPipelineInfo->setDepthStencilState(
 		mPipelineFactory->createDetphStencilState(
 			false
 		)
 	);
+
+	mMSAAPipelineInfo->setDepthStencilState(mPipelineInfo->depthStencilState());
 
 	mPipelineInfo->setRasterizationState(
 		mPipelineFactory->createRasterizationState(
@@ -272,6 +319,8 @@ void TriangleDemoApp::initializePipeline()
 			CodeRed::CullMode::None
 		)
 	);
+	
+	mMSAAPipelineInfo->setRasterizationState(mPipelineInfo->rasterizationState());
 
 	//the name only enabled for vulkan version
 	//this is the entry of shader in glsl
@@ -284,17 +333,48 @@ void TriangleDemoApp::initializePipeline()
 		)
 	);
 
+	mMSAAPipelineInfo->setPixelShaderState(mPipelineInfo->pixelShaderState());
+
 	mPipelineInfo->setBlendState(
 		mPipelineFactory->createBlendState()
 	);
 
+	mMSAAPipelineInfo->setBlendState(mPipelineInfo->blendState());
+
 	mPipelineInfo->setRenderPass(
 		mDevice->createRenderPass(
-			{ CodeRed::Attachment::RenderTarget(mSwapChain->format()) }
+			{ CodeRed::Attachment::RenderTarget(mSwapChain->format(),
+				CodeRed::ResourceLayout::RenderTarget,
+				CodeRed::ResourceLayout::Present) }
 		)
 	);
 
+	mMSAAPipelineInfo->setRenderPass(
+		mDevice->createRenderPass(
+			{
+				CodeRed::Attachment::RenderTargetMultiSample(
+					mMSAABuffer->format(), 
+					mMSAABuffer->sample(),
+					CodeRed::ResourceLayout::RenderTarget,
+					CodeRed::ResourceLayout::GeneralRead)
+			}
+		)
+	);
+
+	mMSAAUIRenderPass = mDevice->createRenderPass(
+		{
+			CodeRed::Attachment::RenderTarget(mSwapChain->format(),
+			CodeRed::ResourceLayout::RenderTarget,
+			CodeRed::ResourceLayout::Present,
+			CodeRed::AttachmentLoad::Load,
+			CodeRed::AttachmentStore::Store)
+		}
+	);
+
+	mMSAAPipelineInfo->renderPass()->setClear(CodeRed::ClearValue(1, 1, 1, 1));
+	
 	mPipelineInfo->updateState();
+	mMSAAPipelineInfo->updateState();
 }
 
 void TriangleDemoApp::initializeImGuiWindows()
@@ -328,7 +408,7 @@ void TriangleDemoApp::initializeDescriptorHeaps()
 		auto descriptorHeap = mDevice->createDescriptorHeap(
 			mPipelineInfo->resourceLayout()
 		);
-
+		
 		descriptorHeap->bindBuffer(mViewBuffer, 0);
 
 		frameResource.set(

@@ -18,6 +18,8 @@ struct TriangleDemoUIComponent {
 	glm::vec3 TrianglePositions[3];
 	glm::vec4 Color;
 
+	bool EnableMSAA = true;
+	
 	TriangleDemoUIComponent();
 
 	auto programStateView() const -> std::shared_ptr<CodeRed::ImGuiView> { return mProgramStateView; }
@@ -73,6 +75,11 @@ private:
 	std::shared_ptr<CodeRed::GpuGraphicsCommandList> mCommandList;
 	std::shared_ptr<CodeRed::GpuCommandQueue> mCommandQueue;
 
+	std::shared_ptr<CodeRed::GpuFrameBuffer> mMSAAFrameBuffer;
+	std::shared_ptr<CodeRed::GpuRenderPass> mMSAAUIRenderPass;
+	std::shared_ptr<CodeRed::PipelineInfo> mMSAAPipelineInfo;
+	std::shared_ptr<CodeRed::GpuTexture> mMSAABuffer;
+	
 	std::vector<CodeRed::FrameResources> mFrameResources =
 		std::vector<CodeRed::FrameResources>(maxFrameResources);
 

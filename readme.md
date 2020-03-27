@@ -12,7 +12,7 @@ Demos for [Code-Red](https://github.com/LinkClinton/Code-Red/tree/master)(A Grap
 
 - [ParticlesDemo](https://github.com/LinkClinton/Code-Red-Demo/tree/master/Demos/ParticlesDemo) : Texture Sample, Render to Texture.
 
-- [TriangleDemo](https://github.com/LinkClinton/Code-Red-Demo/tree/master/Demos/TriangleDemo) : Render Triangle, Constant32Bits.
+- [TriangleDemo](https://github.com/LinkClinton/Code-Red-Demo/tree/master/Demos/TriangleDemo) : Render Triangle, Constant32Bits, MSAA.
 
 ## Screenshots
 
